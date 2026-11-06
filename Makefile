@@ -25,6 +25,7 @@ TBS         ?= axi_addr_test \
                axi_dw_downsizer \
                axi_dw_upsizer \
                axi_fifo \
+               axi_hazard_filter \
                axi_isolate \
                axi_iw_converter \
                axi_lite_regs \

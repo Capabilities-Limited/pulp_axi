@@ -37,6 +37,7 @@ In addition to the documents linked in the following table, we are setting up [d
 | [`axi_err_slv`](src/axi_err_slv.sv)                         | Always responds with an AXI decode/slave error for transactions which are sent to it.                |                                  |
 | [`axi_fifo`](src/axi_fifo.sv)                               | A Fifo for each AXI4 channel to buffer requests.                                                     |                                  |
 | [`axi_from_mem`](src/axi_from_mem.sv)                       | This module acts like an SRAM and makes AXI4 requests downstream.                                    |                                  |
+| [`axi_hazard_filter`](src/axi_hazard_filter.sv)             | Stalls AWs and ARs that would overlap in-flight writes (or reads, for AWs) to the same region.       |                                  |
 | [`axi_id_prepend`](src/axi_id_prepend.sv)                   | This module prepends/strips the MSB from the AXI IDs.                                                |                                  |
 | [`axi_id_remap`](src/axi_id_remap.sv)                       | Remap AXI IDs from wide IDs at the slave port to narrower IDs at the master port.                    | [Doc][doc.axi_id_remap]          |
 | [`axi_id_serialize`](src/axi_id_serialize.sv)               | Reduce AXI IDs by serializing transactions when necessary.                                           | [Doc][doc.axi_id_serialize]      |

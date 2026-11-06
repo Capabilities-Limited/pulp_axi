@@ -146,6 +146,22 @@ module axi_synth_bench (
     end
   end
 
+  // AXI4+ATOP hazard filter
+  for (genvar i_txns = 0; i_txns < 3; i_txns++) begin
+    localparam int unsigned MAX_TXNS[3] = '{1, 4, 16};
+    for (genvar i_region = 0; i_region < 2; i_region++) begin
+      localparam int unsigned REGION_SIZE[2] = '{1, 64};
+      synth_axi_hazard_filter #(
+        .MaxTxns      ( MAX_TXNS[i_txns]      ),
+        .RegionSize   ( REGION_SIZE[i_region] ),
+        .AxiIdWidth   ( 32'd4                 ),
+        .AxiAddrWidth ( 32'd48                ),
+        .AxiDataWidth ( 32'd64                ),
+        .AxiUserWidth ( 32'd1                 )
+      ) i_synth_axi_hazard_filter (.*);
+    end
+  end
+
   // AXI4+ATOP serializer
   for (genvar i = 0; i < 6; i++) begin
     synth_axi_serializer #(
@@ -664,6 +680,41 @@ module synth_axi_modify_address #(
     .mst_aw_addr_i  (mst_aw_addr),
     .mst_ar_addr_i  (mst_ar_addr),
     .mst            (downstream)
+  );
+endmodule
+
+module synth_axi_hazard_filter #(
+  parameter int unsigned MaxTxns      = 32'd0, // number of in-flight reads and writes
+  parameter int unsigned RegionSize   = 32'd0, // granularity of hazard detection in bytes
+  parameter int unsigned AxiIdWidth   = 32'd0, // AXI ID width
+  parameter int unsigned AxiAddrWidth = 32'd0, // AXI address width
+  parameter int unsigned AxiDataWidth = 32'd0, // AXI data width
+  parameter int unsigned AxiUserWidth = 32'd0  // AXI user width
+) (
+  input clk_i,
+  input rst_ni
+);
+
+  AXI_BUS #(
+    .AXI_ADDR_WIDTH ( AxiAddrWidth ),
+    .AXI_DATA_WIDTH ( AxiDataWidth ),
+    .AXI_ID_WIDTH   ( AxiIdWidth   ),
+    .AXI_USER_WIDTH ( AxiUserWidth )
+  ) axi[1:0] ();
+
+  axi_hazard_filter_intf #(
+    .AXI_ID_WIDTH   ( AxiIdWidth   ),
+    .AXI_ADDR_WIDTH ( AxiAddrWidth ),
+    .AXI_DATA_WIDTH ( AxiDataWidth ),
+    .AXI_USER_WIDTH ( AxiUserWidth ),
+    .MAX_READ_TXNS  ( MaxTxns      ),
+    .MAX_WRITE_TXNS ( MaxTxns      ),
+    .REGION_SIZE    ( RegionSize   )
+  ) i_axi_hazard_filter_dut (
+    .clk_i,
+    .rst_ni,
+    .slv    ( axi[0] ),
+    .mst    ( axi[1] )
   );
 endmodule
 

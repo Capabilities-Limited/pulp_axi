@@ -54,6 +54,7 @@ sources:
   - src/axi_dw_upsizer.sv
   - src/axi_fifo.sv
   - src/axi_fifo_delay_dyn.sv
+  - src/axi_hazard_filter.sv
   - src/axi_id_remap.sv
   - src/axi_id_prepend.sv
   - src/axi_inval_filter.sv
@@ -129,6 +130,7 @@ sources:
       - test/tb_axi_dw_downsizer.sv
       - test/tb_axi_dw_upsizer.sv
       - test/tb_axi_fifo.sv
+      - test/tb_axi_hazard_filter.sv
       - test/tb_axi_isolate.sv
       - test/tb_axi_lite_dw_converter.sv
       - test/tb_axi_lite_mailbox.sv

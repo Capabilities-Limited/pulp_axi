@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 
 ### Added
+- `axi_hazard_filter`: Stalls AW and AR transactions to enforce that a memory region has either at
+  most one write or any number of reads in flight, but never both. Adds the
+  `axi_hazard_filter_intf` interface variant and the `tb_axi_hazard_filter` testbench.
 - `axi_to_apb`: AXI4+ATOP to APB4 bridge supporting data-width downsizing and address truncation,
   built on `axi_to_detailed_mem`. Adds the `axi_to_apb_intf` interface variant and the
   `tb_axi_to_apb` testbench. #431

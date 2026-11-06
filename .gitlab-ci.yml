@@ -121,6 +121,7 @@ run_vsim:
           - axi_atop_filter
           - axi_delayer
           - axi_fifo
+          - axi_hazard_filter
           - axi_lite_dw_converter
           - axi_lite_mailbox
           - axi_lite_regs

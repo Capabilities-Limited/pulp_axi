@@ -124,6 +124,15 @@ exec_test() {
                 done
             done
             ;;
+        axi_hazard_filter)
+            for REGION_SIZE in 1 64; do
+                for MAX_TXNS in 1 4; do
+                    call_vsim tb_axi_hazard_filter -gTbRegionSize=$REGION_SIZE \
+                            -gTbMaxWriteTxns=$MAX_TXNS -gTbMaxReadTxns=$((2*MAX_TXNS)) \
+                            -t 1ns -coverage -voptargs="+acc +cover=bcesfx"
+                done
+            done
+            ;;
         axi_iw_converter)
             for SLV_PORT_IW in 1 2 3 4 8; do
                 MAX_SLV_PORT_IDS=$((2**SLV_PORT_IW))
