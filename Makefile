@@ -36,6 +36,7 @@ TBS         ?= axi_addr_test \
                axi_modify_address \
                axi_serializer \
                axi_sim_mem \
+               axi_throttle \
                axi_to_apb \
                axi_to_axi_lite \
                axi_to_mem_banked \

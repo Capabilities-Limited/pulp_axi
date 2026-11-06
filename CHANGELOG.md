@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## Unreleased
 
 ### Added
+- `axi_throttle`: Add optional limiting of the number of outstanding read data beats
+  (`MaxNumRBeatsPending` parameter, `r_beat_credit_i` input; disabled by default). Add the
+  `tb_axi_throttle` testbench.
 - `axi_hazard_filter`: Stalls AW and AR transactions to enforce that a memory region has either at
   most one write or any number of reads in flight, but never both. Adds the
   `axi_hazard_filter_intf` interface variant and the `tb_axi_hazard_filter` testbench.

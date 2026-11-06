@@ -133,6 +133,13 @@ exec_test() {
                 done
             done
             ;;
+        axi_throttle)
+            # MaxNumRBeatsPending:RBeatCredit (0 disables read beat limiting)
+            for BEATS in 0:1 1:1 16:16 64:40; do
+                call_vsim tb_axi_throttle -gTbMaxNumRBeatsPending=${BEATS%%:*} \
+                        -gTbRBeatCredit=${BEATS##*:} -t 1ns -coverage -voptargs="+acc +cover=bcesfx"
+            done
+            ;;
         axi_iw_converter)
             for SLV_PORT_IW in 1 2 3 4 8; do
                 MAX_SLV_PORT_IDS=$((2**SLV_PORT_IW))

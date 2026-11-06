@@ -144,6 +144,7 @@ sources:
       - test/tb_axi_serializer.sv
       - test/tb_axi_sim_mem.sv
       - test/tb_axi_slave_compare.sv
+      - test/tb_axi_throttle.sv
       - test/tb_axi_to_axi_lite.sv
       - test/tb_axi_to_mem_banked.sv
       - test/tb_axi_xbar.sv
