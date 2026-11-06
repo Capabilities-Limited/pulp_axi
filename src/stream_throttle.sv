@@ -4,10 +4,9 @@
 //
 // Thomas Benz <tbenz@ethz.ch>
 //
-// Vendored from `cc_stream_throttle` of common_cells v2
-// (https://github.com/pulp-platform/common_cells, rev db42769334b4589b4b3fc671b34513bdb98be565),
-// renamed and adapted to the common_cells v1 naming (`cf_math_pkg`, `FFLARNC`) for use with
-// `axi_throttle` in projects that vendor common_cells v1.
+// Vendored unmodified from common_cells v1.40.0 (https://github.com/pulp-platform/common_cells),
+// as the common_cells revision vendored into cheri-cva6 predates `stream_throttle`. Bender users get
+// this module from their common_cells dependency instead (see Bender.yml).
 
 `include "common_cells/registers.svh"
 
@@ -19,16 +18,14 @@ module stream_throttle #(
     /// The maximum amount of allowable outstanding requests
     parameter int unsigned MaxNumPending = 1,
     /// The width of the credit counter (*DO NOT OVERWRITE*)
-    localparam int unsigned CntWidth = cf_math_pkg::idx_width(MaxNumPending),
+    parameter int unsigned CntWidth = cf_math_pkg::idx_width(MaxNumPending),
     /// The type of the credit counter (*DO NOT OVERWRITE*)
-    localparam type credit_t = logic [CntWidth-1:0]
+    parameter type credit_t = logic [CntWidth-1:0]
 ) (
     /// Clock
     input  logic clk_i,
-    /// Asynchronous reset active low
+    /// Asynchronous reset, active low
     input  logic rst_ni,
-    /// Synchronous clear active high
-    input  logic clr_i,
 
     /// Request valid in
     input  logic    req_valid_i,
@@ -84,6 +81,6 @@ module stream_throttle #(
     assign req_ready_o = req_ready_i & credit_available;
 
     // state
-    `FFLARNC(credit_q, credit_d, 1'b1, clr_i, '0, clk_i, rst_ni)
+    `FF(credit_q, credit_d, '0, clk_i, rst_ni)
 
 endmodule : stream_throttle

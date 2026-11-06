@@ -1,0 +1,16 @@
+# Capabilities Limited additions to pulp-platform/axi, ported to common_cells v1 for use with
+# projects (axi_cheri_tagcontroller, cheri-cva6) that depend on axi v0.31 and common_cells v1.
+package:
+  name: axi_capltd
+  authors:
+    - "Jonathan Woodruff <jonathan.woodruff@capabilitieslimited.co.uk>"
+
+dependencies:
+  axi:          { git: "https://github.com/pulp-platform/axi.git", rev: "697f13ff67153a5243e347f2d1992a125018b6c2" } # v0.31.0
+  # common_cells >= 1.32.0 provides `stream_throttle`, so `src/stream_throttle.sv` (vendored for
+  # cheri-cva6, whose common_cells predates it) is not listed below.
+  common_cells: { git: "https://github.com/pulp-platform/common_cells.git", version: "1.32.0" }
+
+sources:
+  - src/axi_hazard_filter.sv
+  - src/axi_throttle.sv
