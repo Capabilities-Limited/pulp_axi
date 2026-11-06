@@ -91,8 +91,8 @@ module axi_hazard_filter #(
 
   localparam int unsigned RegionOffsetWidth = $clog2(RegionSize);
   localparam int unsigned RegionIdxWidth    = AxiAddrWidth - RegionOffsetWidth;
-  localparam int unsigned WrSlotIdxWidth    = cc_pkg::idx_width(MaxWriteTxns);
-  localparam int unsigned RdSlotIdxWidth    = cc_pkg::idx_width(MaxReadTxns);
+  localparam int unsigned WrSlotIdxWidth    = cf_math_pkg::idx_width(MaxWriteTxns);
+  localparam int unsigned RdSlotIdxWidth    = cf_math_pkg::idx_width(MaxReadTxns);
 
   typedef logic [AxiIdWidth-1:0]     id_t;
   typedef logic [AxiAddrWidth-1:0]   addr_t;
@@ -168,18 +168,18 @@ module axi_hazard_filter #(
   rd_slot_idx_t              rd_free_idx, rd_retire_idx;
 
   // Find a free slot in each table.
-  cc_lzc #(
-    .Width ( MaxWriteTxns                  ),
-    .Mode  ( cc_pkg::LZC_TRAILING_ZERO_CNT )
+  lzc #(
+    .WIDTH ( MaxWriteTxns ),
+    .MODE  ( 1'b0         ) // trailing zero count
   ) i_wr_free_lzc (
     .in_i    ( ~wr_valid_q ),
     .cnt_o   ( wr_free_idx ),
     .empty_o ( wr_full     )
   );
 
-  cc_lzc #(
-    .Width ( MaxReadTxns                   ),
-    .Mode  ( cc_pkg::LZC_TRAILING_ZERO_CNT )
+  lzc #(
+    .WIDTH ( MaxReadTxns  ),
+    .MODE  ( 1'b0         ) // trailing zero count
   ) i_rd_free_lzc (
     .in_i    ( ~rd_valid_q ),
     .cnt_o   ( rd_free_idx ),
@@ -278,15 +278,14 @@ module axi_hazard_filter #(
   logic rd_idq_inp_req, rd_idq_inp_gnt, rd_idq_oup_valid;
   id_t  rd_idq_inp_id;
 
-  cc_id_queue #(
-    .IdWidth  ( AxiIdWidth    ),
-    .Capacity ( MaxWriteTxns  ),
-    .FullBw   ( 1'b1          ),
+  id_queue #(
+    .ID_WIDTH ( AxiIdWidth    ),
+    .CAPACITY ( MaxWriteTxns  ),
+    .FULL_BW  ( 1'b1          ),
     .data_t   ( wr_slot_idx_t )
   ) i_wr_id_queue (
     .clk_i,
     .rst_ni,
-    .clr_i            ( 1'b0              ),
     .inp_id_i         ( slv_req_i.aw.id   ),
     .inp_data_i       ( wr_free_idx       ),
     .inp_req_i        ( aw_hs             ),
@@ -301,23 +300,20 @@ module axi_hazard_filter #(
     .oup_req_i        ( b_hs              ),
     .oup_data_o       ( wr_retire_idx     ),
     .oup_data_valid_o ( wr_idq_oup_valid  ),
-    .oup_gnt_o        ( /* not used */    ),
-    .full_o           ( /* not used */    ),
-    .empty_o          ( /* not used */    )
+    .oup_gnt_o        ( /* not used */    )
   );
 
   assign rd_idq_inp_req = ar_hs | (aw_hs & aw_atop_r_resp);
   assign rd_idq_inp_id  = ar_hs ? slv_req_i.ar.id : slv_req_i.aw.id;
 
-  cc_id_queue #(
-    .IdWidth  ( AxiIdWidth    ),
-    .Capacity ( MaxReadTxns   ),
-    .FullBw   ( 1'b1          ),
+  id_queue #(
+    .ID_WIDTH ( AxiIdWidth    ),
+    .CAPACITY ( MaxReadTxns   ),
+    .FULL_BW  ( 1'b1          ),
     .data_t   ( rd_slot_idx_t )
   ) i_rd_id_queue (
     .clk_i,
     .rst_ni,
-    .clr_i            ( 1'b0              ),
     .inp_id_i         ( rd_idq_inp_id     ),
     .inp_data_i       ( rd_free_idx       ),
     .inp_req_i        ( rd_idq_inp_req    ),
@@ -332,9 +328,7 @@ module axi_hazard_filter #(
     .oup_req_i        ( r_last_hs         ),
     .oup_data_o       ( rd_retire_idx     ),
     .oup_data_valid_o ( rd_idq_oup_valid  ),
-    .oup_gnt_o        ( /* not used */    ),
-    .full_o           ( /* not used */    ),
-    .empty_o          ( /* not used */    )
+    .oup_gnt_o        ( /* not used */    )
   );
 
   always_comb begin

@@ -30,15 +30,15 @@ module axi_throttle #(
     /// read beat limiting
     parameter int unsigned MaxNumRBeatsPending = 0,
     /// The width of the write credit counter (*DO NOT OVERWRITE*)
-    parameter int unsigned WCntWidth = cc_pkg::idx_width(MaxNumAwPending),
+    parameter int unsigned WCntWidth = cf_math_pkg::idx_width(MaxNumAwPending),
     /// The width of the read credit counter (*DO NOT OVERWRITE*)
-    parameter int unsigned RCntWidth = cc_pkg::idx_width(MaxNumArPending),
+    parameter int unsigned RCntWidth = cf_math_pkg::idx_width(MaxNumArPending),
     /// The type of the write credit counter (*DO NOT OVERWRITE*)
     parameter type w_credit_t = logic [WCntWidth-1:0],
     /// The type of the read credit counter (*DO NOT OVERWRITE*)
     parameter type r_credit_t = logic [RCntWidth-1:0],
     /// The width of the read beat credit (*DO NOT OVERWRITE*)
-    parameter int unsigned RBeatCntWidth = cc_pkg::cnt_width(MaxNumRBeatsPending),
+    parameter int unsigned RBeatCntWidth = cf_math_pkg::idx_width(MaxNumRBeatsPending + 1),
     /// The type of the read beat credit (*DO NOT OVERWRITE*)
     parameter type r_beat_credit_t = logic [RBeatCntWidth-1:0]
 ) (
@@ -74,7 +74,7 @@ module axi_throttle #(
     logic throttled_ar_ready;
 
     // limit Aw requests -> wait for b
-    cc_stream_throttle #(
+    stream_throttle #(
         .MaxNumPending ( MaxNumAwPending  )
     ) i_stream_throttle_aw (
         .clk_i,
@@ -95,7 +95,7 @@ module axi_throttle #(
     if (MaxNumRBeatsPending > 0) begin : gen_r_beat_throttle
         // Wide enough for the beat credit and for the largest burst (256 beats).
         localparam int unsigned BeatCntWidth =
-            cc_pkg::cnt_width(MaxNumRBeatsPending > 256 ? MaxNumRBeatsPending : 256);
+            cf_math_pkg::idx_width((MaxNumRBeatsPending > 256 ? MaxNumRBeatsPending : 256) + 1);
         typedef logic [BeatCntWidth-1:0] beat_cnt_t;
 
         beat_cnt_t r_beats_pending, ar_beats, r_beats_delta;
@@ -114,12 +114,12 @@ module axi_throttle #(
         // Count up by the beats of a forwarded AR, count down by one for each R beat.
         assign r_beats_delta = ar_hs ? (ar_beats - beat_cnt_t'(r_hs)) : beat_cnt_t'(1);
 
-        cc_delta_counter #(
-            .Width          ( BeatCntWidth )
+        delta_counter #(
+            .WIDTH          ( BeatCntWidth )
         ) i_r_beat_counter (
             .clk_i,
             .rst_ni,
-            .clr_i      ( 1'b0            ),
+            .clear_i    ( 1'b0            ),
             .en_i       ( ar_hs | r_hs    ),
             .load_i     ( 1'b0            ),
             .down_i     ( ~ar_hs          ),
@@ -152,7 +152,7 @@ module axi_throttle #(
     end
 
     // limit Ar requests -> wait for r.last
-    cc_stream_throttle #(
+    stream_throttle #(
         .MaxNumPending ( MaxNumArPending  )
     ) i_stream_throttle_ar (
         .clk_i,
