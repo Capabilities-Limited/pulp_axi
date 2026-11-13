@@ -132,6 +132,9 @@ exec_test() {
                             -t 1ns -coverage -voptargs="+acc +cover=bcesfx"
                 done
             done
+            # A narrow page hash makes most pages collide (false hazards only).
+            call_vsim tb_axi_hazard_filter -gTbPageHashWidth=2 \
+                    -t 1ns -coverage -voptargs="+acc +cover=bcesfx"
             ;;
         axi_throttle)
             # MaxNumRBeatsPending:RBeatCredit (0 disables read beat limiting)

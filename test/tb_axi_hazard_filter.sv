@@ -24,6 +24,10 @@
 ///   an in-flight write (the hazard invariant), using an independent reference model of the
 ///   address ranges of in-flight transactions;
 /// - the DUT actually had to stall overlapping transactions, i.e., the stimuli exercised hazards.
+///
+/// One memory region lies in a page whose page-number hash equals that of the dense region at
+/// address 0 (for `TbPageHashWidth = 16`), so that hash collisions between different pages are
+/// exercised: they may cause additional stalls, but must not cause missed hazards or deadlocks.
 module tb_axi_hazard_filter #(
   /// Number of write transactions issued by the random master.
   parameter int unsigned TbNumWrites   = 32'd5000,
@@ -34,7 +38,9 @@ module tb_axi_hazard_filter #(
   /// Maximum number of in-flight writes of the DUT.
   parameter int unsigned TbMaxWriteTxns = 32'd4,
   /// Maximum number of in-flight reads of the DUT.
-  parameter int unsigned TbMaxReadTxns  = 32'd8
+  parameter int unsigned TbMaxReadTxns  = 32'd8,
+  /// Width of the page-number hash of the DUT.
+  parameter int unsigned TbPageHashWidth = 32'd16
 );
   // Random master
   localparam int unsigned MaxAW      = 32'd30;
@@ -139,8 +145,9 @@ module tb_axi_hazard_filter #(
     .AXI_DATA_WIDTH ( AxiDataWidth   ),
     .AXI_USER_WIDTH ( AxiUserWidth   ),
     .MAX_READ_TXNS  ( TbMaxReadTxns  ),
-    .MAX_WRITE_TXNS ( TbMaxWriteTxns ),
-    .REGION_SIZE    ( TbRegionSize   )
+    .MAX_WRITE_TXNS  ( TbMaxWriteTxns  ),
+    .REGION_SIZE     ( TbRegionSize    ),
+    .PAGE_HASH_WIDTH ( TbPageHashWidth )
   ) i_dut (
     .clk_i  ( clk    ),
     .rst_ni ( rst_n  ),
@@ -155,6 +162,8 @@ module tb_axi_hazard_filter #(
     // produces mostly independent transactions.
     axi_rand_master.add_memory_region(32'h0000_0000, 32'h0000_0400, axi_pkg::WBACK_RWALLOCATE);
     axi_rand_master.add_memory_region(32'h0001_0000, 32'h0002_0000, axi_pkg::DEVICE_NONBUFFERABLE);
+    // Page 0x10001 XOR-folds to the same 16-bit hash as page 0 (0x1 ^ 0x0001 = 0).
+    axi_rand_master.add_memory_region(32'h1000_1000, 32'h1000_1400, axi_pkg::WBACK_RWALLOCATE);
     axi_rand_master.reset();
     @(posedge rst_n);
     axi_rand_master.run(TbNumReads, TbNumWrites);
