@@ -713,8 +713,9 @@ module synth_axi_hazard_filter #(
   ) i_axi_hazard_filter_dut (
     .clk_i,
     .rst_ni,
-    .slv    ( axi[0] ),
-    .mst    ( axi[1] )
+    .slv            ( axi[0] ),
+    .mst            ( axi[1] ),
+    .backpressure_o (        )
   );
 endmodule
 

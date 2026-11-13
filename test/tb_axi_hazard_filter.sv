@@ -95,6 +95,7 @@ module tb_axi_hazard_filter #(
   logic clk;
   logic rst_n;
   logic end_of_sim;
+  logic backpressure;
 
   // interfaces
   AXI_BUS #(
@@ -149,10 +150,11 @@ module tb_axi_hazard_filter #(
     .REGION_SIZE     ( TbRegionSize    ),
     .PAGE_HASH_WIDTH ( TbPageHashWidth )
   ) i_dut (
-    .clk_i  ( clk    ),
-    .rst_ni ( rst_n  ),
-    .slv    ( master ),
-    .mst    ( slave  )
+    .clk_i          ( clk          ),
+    .rst_ni         ( rst_n        ),
+    .slv            ( master       ),
+    .mst            ( slave        ),
+    .backpressure_o ( backpressure )
   );
 
   initial begin : proc_axi_master
@@ -315,6 +317,7 @@ module tb_axi_hazard_filter #(
   int unsigned max_rd_inflight       = 0;
   int unsigned num_rd_parallel       = 0; // ARs issued while overlapping reads were in flight
   int unsigned num_hazard_violations = 0;
+  int unsigned num_backpressure_cycles = 0; // cycles with `backpressure_o` high
 
   initial begin : proc_hazard_checker
     automatic range_t aw_range, ar_range;
@@ -385,6 +388,14 @@ module tb_axi_hazard_filter #(
       // Stall coverage
       if (master.aw_valid && !slave.aw_valid) num_aw_stall_cycles++;
       if (master.ar_valid && !slave.ar_valid) num_ar_stall_cycles++;
+      // The back pressure event must be high exactly when the DUT holds back a valid AW or AR.
+      assert (backpressure == ((master.aw_valid && !slave.aw_valid) ||
+                               (master.ar_valid && !slave.ar_valid))) else begin
+        num_hazard_violations++;
+        $error("backpressure_o is %0b, but AW/AR held back is %0b.", backpressure,
+            (master.aw_valid && !slave.aw_valid) || (master.ar_valid && !slave.ar_valid));
+      end
+      if (backpressure) num_backpressure_cycles++;
     end
   end
 
@@ -427,6 +438,7 @@ module tb_axi_hazard_filter #(
         repeat (10) @(posedge clk);
         $display("AW stall cycles:           %0d", num_aw_stall_cycles);
         $display("AR stall cycles:           %0d", num_ar_stall_cycles);
+        $display("Back pressure cycles:      %0d", num_backpressure_cycles);
         $display("Overlapping parallel ARs:  %0d", num_rd_parallel);
         $display("Max in-flight writes:      %0d of %0d", max_wr_inflight, TbMaxWriteTxns);
         $display("Max in-flight reads:       %0d of %0d", max_rd_inflight, TbMaxReadTxns);
@@ -438,7 +450,9 @@ module tb_axi_hazard_filter #(
         // Make sure the stimuli actually exercised the hazard filtering.
         assert (num_aw_stall_cycles > 0) else $error("No AW was ever stalled.");
         assert (num_ar_stall_cycles > 0) else $error("No AR was ever stalled.");
-        assert (num_rd_parallel > 0) else $error("Overlapping reads were never in flight together.");
+        assert (num_backpressure_cycles > 0) else $error("backpressure_o was never high.");
+        assert (num_rd_parallel > 0)
+          else $error("Overlapping reads were never in flight together.");
         assert (num_hazard_violations == 0)
           else $error("%0d hazard violations detected.", num_hazard_violations);
         $info("All transactions completed.");
